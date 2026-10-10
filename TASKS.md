@@ -44,7 +44,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
   Pronto quando: `/metrics` responde com as métricas padrão do processo.
 - [ ] **T1.9** `GET /health/live` e `GET /health/ready` (PostgreSQL + três filas, timeout 1s). Spec §10.
   Pronto quando: `ready` dá 503 com o Postgres parado e 200 com tudo de pé.
-- [ ] **T1.10** Shared domain: `DomainError`, enum `FailureCode` (spec §9), portas `Clock` e `IdGenerator` (UUIDv7) com implementações reais.
+- [x] **T1.10** Shared domain: `DomainError`, enum `FailureCode` (spec §9), portas `Clock` e `IdGenerator` (UUIDv7) com implementações reais.
   Pronto quando: unit tests de `IdGenerator` (ordenação) e `Clock` passam.
 - [ ] **T1.11** `AuthGuard` no-op global (exceto health e metrics) e `ProviderIdentityPort`. ADR-011.
   Pronto quando: guard aplicado e documentado no código como ponto de extensão.
