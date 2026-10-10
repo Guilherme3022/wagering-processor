@@ -30,7 +30,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
   Pronto quando: um arquivo de teste com `Number(amount)` no domínio falha no lint.
 - [x] **T1.2b** Regra `no-restricted-imports` por pasta: `domain` não importa NestJS, MikroORM, AWS SDK, pino, `application` nem `infra`; `application` não importa `infra`. Spec §2.1 (A1).
   Pronto quando: um import de `@mikro-orm/core` num arquivo de `domain` faz `bun run lint` falhar.
-- [ ] **T1.3** Bootstrap NestJS com `enableShutdownHooks()` e módulos vazios (`shared`, `wallet`, `wagering`, `messaging`, `health`, `auth`). Spec §2.1.
+- [x] **T1.3** Bootstrap NestJS com `enableShutdownHooks()` e módulos vazios (`shared`, `wallet`, `wagering`, `messaging`, `health`, `auth`). Spec §2.1.
   Pronto quando: `bun run start:dev` sobe e responde 404 em `/`.
 - [ ] **T1.4** Config tipada e validada no boot (zod) com todas as variáveis da spec §11.
   Pronto quando: variável obrigatória ausente derruba o boot com mensagem clara.
