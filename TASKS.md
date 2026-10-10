@@ -34,8 +34,9 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
   Pronto quando: `bun run start:dev` sobe e responde 404 em `/`.
 - [x] **T1.4** Config tipada e validada no boot (zod) com todas as variáveis da spec §11.
   Pronto quando: variável obrigatória ausente derruba o boot com mensagem clara.
-- [ ] **T1.5** `docker-compose.yml` com PostgreSQL 16 e LocalStack, e script de init que cria as três filas com redrive (`maxReceiveCount: 5`). Spec §8.1.
-  Pronto quando: `docker compose up -d` e `aws sqs list-queues` (via LocalStack) mostram as três filas.
+- [~] **T1.5** `docker-compose.yml` com PostgreSQL 16 e emulador de SQS (MiniStack, ADR-013), e script de init que cria as três filas com redrive (`maxReceiveCount: 5`). Spec §8.1.
+  Pronto quando: `docker compose up -d` e `aws sqs list-queues` mostram as três filas.
+  Situação: arquivos escritos e sintaxe validada; falta subir com Docker de verdade e fixar a tag da imagem do MiniStack.
 - [ ] **T1.6** MikroORM configurado, scripts `migration:create`, `migration:up`, `migration:down`. Spec §4.
   Pronto quando: uma migration vazia sobe e desce.
 - [ ] **T1.7** Logger pino JSON, correlação com `AsyncLocalStorage`, `X-Correlation-Id` aceito e devolvido, `redact` configurado. Spec §10.
@@ -48,7 +49,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
   Pronto quando: unit tests de `IdGenerator` (ordenação) e `Clock` passam.
 - [ ] **T1.11** `AuthGuard` no-op global (exceto health e metrics) e `ProviderIdentityPort`. ADR-011.
   Pronto quando: guard aplicado e documentado no código como ponto de extensão.
-- [ ] **T1.12** Infra de testes: `docker-compose.test.yml`, helpers em `test/support` (schema isolado por arquivo, filas com sufixo único, `eventually`, `FakeClock`, cliente HTTP da app real). Spec §12.
+- [~] **T1.12** (`docker-compose.test.yml` e pastas criados; helpers pendentes) Infra de testes: `docker-compose.test.yml`, helpers em `test/support` (schema isolado por arquivo, filas com sufixo único, `eventually`, `FakeClock`, cliente HTTP da app real). Spec §12.
   Pronto quando: um teste de integração "hello" sobe a app contra Postgres e LocalStack reais.
 - [ ] **T1.13** Scripts `test:unit`, `test:integration`, `test:concurrency`, `lint`, `typecheck`.
 - [ ] **T1.14** Docs: README com "Requisitos" e "Rodando" (skill `project-docs`).

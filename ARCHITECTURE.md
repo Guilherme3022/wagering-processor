@@ -101,6 +101,16 @@ Cada decisão segue o formato: o problema, o que escolhemos, o que descartamos e
 
 **Decisão.** UUIDv7 em todas as entidades: ordenáveis no tempo e bons para índice. A paginação do ledger usa uma sequência própria (`seq`), escondida num cursor opaco.
 
+### ADR-013 — MiniStack como emulador de SQS padrão
+
+**Problema.** Desde março de 2026, as versões recentes do LocalStack exigem conta e token de autenticação, inclusive em CI.
+
+**Decisão.** O `docker-compose.yml` usa o MiniStack, que o enunciado também aceita e roda sem conta. As filas são criadas por um container `aws-cli` separado, que funciona com qualquer emulador. Trocar para o LocalStack é só definir `SQS_EMULATOR_IMAGE` e `LOCALSTACK_AUTH_TOKEN`.
+
+**Descartado.** Fixar uma versão antiga do LocalStack: congela o projeto numa imagem sem atualizações.
+
+**Custo.** O MiniStack precisa provar, no M8, que suporta `ApproximateReceiveCount` e o redrive para a DLQ como o SQS real. Se não suportar, voltamos ao LocalStack com token gratuito.
+
 ## Limitações conhecidas
 
 - Uma `BET` compensada e depois "descompensada" não pode ser compensada de novo (ADR-001).

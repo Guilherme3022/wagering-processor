@@ -784,6 +784,8 @@ Cada ADR é detalhado em `ARCHITECTURE.md` (contexto → decisão → alternativ
 
 Nenhuma bloqueante. Divergências descobertas na implementação entram aqui com data e são levadas ao humano.
 
+- **2026-10-10 — Emulador de SQS.** Onde esta spec diz LocalStack, leia "emulador de SQS": o padrão passou a ser o MiniStack (ADR-013), porque o LocalStack recente exige token. Risco a validar no M8: suporte a `ApproximateReceiveCount` e ao redrive para a DLQ.
+
 ## 16. Marcos de entrega
 
 1. Esqueleto (Bun, Nest, MikroORM, compose, filas, health, logger, config)

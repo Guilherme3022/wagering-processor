@@ -1,0 +1,51 @@
+# Infra local: PostgreSQL 16 + emulador de SQS + criação das filas.
+# O emulador padrão é o MiniStack (sem conta nem token; ADR-013). Para usar o LocalStack,
+# defina SQS_EMULATOR_IMAGE=localstack/localstack:<tag> e LOCALSTACK_AUTH_TOKEN no .env.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wagering
+      POSTGRES_PASSWORD: wagering
+      POSTGRES_DB: wagering
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wagering -d wagering"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  sqs:
+    image: ${SQS_EMULATOR_IMAGE:-ministackorg/ministack:latest}
+    environment:
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+      SERVICES: sqs
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health || wget -qO- http://localhost:4566/_localstack/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  sqs-init:
+    image: amazon/aws-cli:latest
+    depends_on:
+      sqs:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://sqs:4566
+    volumes:
+      - ./infra/sqs/create-queues.sh:/create-queues.sh:ro
+    entrypoint: ["sh", "/create-queues.sh"]
+    restart: "no"
+
+volumes:
+  postgres-data:
