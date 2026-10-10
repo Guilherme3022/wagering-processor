@@ -19,7 +19,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
 
 - [x] **T0.1** Inicializar git, `.gitignore` (node_modules, .env, coverage, dist), `.editorconfig`, `.env.example`.
   Pronto quando: `git status` limpo após o primeiro commit; `.env` nunca rastreado.
-- [ ] **T0.2** Mover o enunciado para `docs/CHALLENGE.md` sem alterações e criar um `README.md` mínimo (título, uma frase, links para spec e arquitetura).
+- [x] **T0.2** Mover o enunciado para `docs/CHALLENGE.md` sem alterações e criar um `README.md` mínimo (título, uma frase, links para spec e arquitetura).
   Pronto quando: `diff` do enunciado com o original é vazio.
 
 ## M1 — Esqueleto
