@@ -26,7 +26,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
 
 - [x] **T1.1** `package.json` com Bun 1.x, `tsconfig.json` estrito (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, decorators). AGENTS §3.
   Pronto quando: `bun run typecheck` passa num `src/main.ts` vazio.
-- [ ] **T1.2** ESLint com regra `no-restricted-syntax` proibindo `parseFloat`, `Number(` e `toFixed` em `src/**/domain` e nos mappers de dinheiro. AGENTS §5.1.
+- [x] **T1.2** ESLint com regra `no-restricted-syntax` proibindo `parseFloat`, `Number(` e `toFixed` em `src/**/domain` e nos mappers de dinheiro. AGENTS §5.1.
   Pronto quando: um arquivo de teste com `Number(amount)` no domínio falha no lint.
 - [ ] **T1.2b** Regra `no-restricted-imports` por pasta: `domain` não importa NestJS, MikroORM, AWS SDK, pino, `application` nem `infra`; `application` não importa `infra`. Spec §2.1 (A1).
   Pronto quando: um import de `@mikro-orm/core` num arquivo de `domain` faz `bun run lint` falhar.
