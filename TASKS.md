@@ -32,7 +32,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
   Pronto quando: um import de `@mikro-orm/core` num arquivo de `domain` faz `bun run lint` falhar.
 - [x] **T1.3** Bootstrap NestJS com `enableShutdownHooks()` e módulos vazios (`shared`, `wallet`, `wagering`, `messaging`, `health`, `auth`). Spec §2.1.
   Pronto quando: `bun run start:dev` sobe e responde 404 em `/`.
-- [ ] **T1.4** Config tipada e validada no boot (zod) com todas as variáveis da spec §11.
+- [x] **T1.4** Config tipada e validada no boot (zod) com todas as variáveis da spec §11.
   Pronto quando: variável obrigatória ausente derruba o boot com mensagem clara.
 - [ ] **T1.5** `docker-compose.yml` com PostgreSQL 16 e LocalStack, e script de init que cria as três filas com redrive (`maxReceiveCount: 5`). Spec §8.1.
   Pronto quando: `docker compose up -d` e `aws sqs list-queues` (via LocalStack) mostram as três filas.
