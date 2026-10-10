@@ -25,6 +25,9 @@ const noFloatMoney = [
   },
 ];
 
+/** Bibliotecas de infraestrutura que o domínio e a aplicação não podem conhecer (spec §2.1). */
+const infraLibraries = ["@mikro-orm/*", "@aws-sdk/*", "pino", "pino-*", "nestjs-pino", "prom-client"];
+
 export default tseslint.config(
   { ignores: ["node_modules/", "dist/", "coverage/", "test/load/results/"] },
   js.configs.recommended,
@@ -49,6 +52,42 @@ export default tseslint.config(
   {
     files: ["src/**/domain/**/*.ts", "src/**/persistence/**/*mapper*.ts", "src/**/persistence/**/*money*.ts"],
     rules: { "no-restricted-syntax": ["error", ...noFloatMoney] },
+  },
+  {
+    files: ["src/**/domain/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@nestjs/*", ...infraLibraries],
+              message: "O domínio não depende de framework nem de infraestrutura (spec §2.1).",
+            },
+            {
+              group: ["**/application/**", "**/infra/**"],
+              message: "O domínio não importa application nem infra (spec §2.1).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/**/application/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [...infraLibraries, "**/infra/**"],
+              message: "A aplicação depende de portas, nunca de infraestrutura (spec §2.1).",
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     files: ["test/**/*.ts"],

@@ -28,7 +28,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
   Pronto quando: `bun run typecheck` passa num `src/main.ts` vazio.
 - [x] **T1.2** ESLint com regra `no-restricted-syntax` proibindo `parseFloat`, `Number(` e `toFixed` em `src/**/domain` e nos mappers de dinheiro. AGENTS §5.1.
   Pronto quando: um arquivo de teste com `Number(amount)` no domínio falha no lint.
-- [ ] **T1.2b** Regra `no-restricted-imports` por pasta: `domain` não importa NestJS, MikroORM, AWS SDK, pino, `application` nem `infra`; `application` não importa `infra`. Spec §2.1 (A1).
+- [x] **T1.2b** Regra `no-restricted-imports` por pasta: `domain` não importa NestJS, MikroORM, AWS SDK, pino, `application` nem `infra`; `application` não importa `infra`. Spec §2.1 (A1).
   Pronto quando: um import de `@mikro-orm/core` num arquivo de `domain` faz `bun run lint` falhar.
 - [ ] **T1.3** Bootstrap NestJS com `enableShutdownHooks()` e módulos vazios (`shared`, `wallet`, `wagering`, `messaging`, `health`, `auth`). Spec §2.1.
   Pronto quando: `bun run start:dev` sobe e responde 404 em `/`.
