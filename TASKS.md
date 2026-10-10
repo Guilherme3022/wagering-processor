@@ -24,7 +24,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
 
 ## M1 — Esqueleto
 
-- [ ] **T1.1** `package.json` com Bun 1.x, `tsconfig.json` estrito (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, decorators). AGENTS §3.
+- [x] **T1.1** `package.json` com Bun 1.x, `tsconfig.json` estrito (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, decorators). AGENTS §3.
   Pronto quando: `bun run typecheck` passa num `src/main.ts` vazio.
 - [ ] **T1.2** ESLint com regra `no-restricted-syntax` proibindo `parseFloat`, `Number(` e `toFixed` em `src/**/domain` e nos mappers de dinheiro. AGENTS §5.1.
   Pronto quando: um arquivo de teste com `Number(amount)` no domínio falha no lint.
