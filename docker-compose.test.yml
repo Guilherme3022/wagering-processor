@@ -26,7 +26,12 @@ services:
     ports:
       - "54566:4566"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health || wget -qO- http://localhost:4566/_localstack/health"]
+      # A imagem do MiniStack não traz curl nem wget; usa o python3 que ela já embarca.
+      test:
+        [
+          "CMD-SHELL",
+          "python3 -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:4566/_localstack/health').status==200 else 1)\"",
+        ]
       interval: 2s
       timeout: 3s
       retries: 30
