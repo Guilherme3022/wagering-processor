@@ -32,7 +32,8 @@ const schema = z
     PENDING_REFERENCE_MAX_BACKOFF_MS: positiveInt.default(300_000),
 
     SHUTDOWN_GRACE_MS: positiveInt.default(25_000),
-    FAULT_INJECTION: z.enum(["exit_after_commit_before_ack"]).optional(),
+    FAULT_INJECTION: z.enum(["exit_after_commit_before_ack", "fail_transient"]).optional(),
+    WORKERS_ENABLED: z.enum(["true", "false"]).default("true"),
   })
   .refine((env) => env.FAULT_INJECTION === undefined || env.NODE_ENV === "test", {
     message: "FAULT_INJECTION só pode ser usado com NODE_ENV=test",
@@ -92,5 +93,6 @@ function toAppConfig(env: z.infer<typeof schema>) {
     },
     shutdownGraceMs: env.SHUTDOWN_GRACE_MS,
     faultInjection: env.FAULT_INJECTION,
+    workersEnabled: env.WORKERS_ENABLED === "true",
   } as const;
 }
