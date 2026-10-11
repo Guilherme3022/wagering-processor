@@ -34,6 +34,14 @@ const schema = z
     SHUTDOWN_GRACE_MS: positiveInt.default(25_000),
     FAULT_INJECTION: z.enum(["exit_after_commit_before_ack", "fail_transient"]).optional(),
     WORKERS_ENABLED: z.enum(["true", "false"]).default("true"),
+    AUTH_ENABLED: z.enum(["true", "false"]).default("false"),
+    AUTH_JWKS_URI: z.url().optional(),
+    AUTH_ISSUER: z.string().min(1).optional(),
+    AUTH_AUDIENCE: z.string().min(1).optional(),
+  })
+  .refine((env) => env.AUTH_ENABLED === "false" || (env.AUTH_JWKS_URI !== undefined && env.AUTH_ISSUER !== undefined), {
+    message: "AUTH_ENABLED=true exige AUTH_JWKS_URI e AUTH_ISSUER",
+    path: ["AUTH_ENABLED"],
   })
   .refine((env) => env.FAULT_INJECTION === undefined || env.NODE_ENV === "test", {
     message: "FAULT_INJECTION só pode ser usado com NODE_ENV=test",
@@ -94,5 +102,11 @@ function toAppConfig(env: z.infer<typeof schema>) {
     shutdownGraceMs: env.SHUTDOWN_GRACE_MS,
     faultInjection: env.FAULT_INJECTION,
     workersEnabled: env.WORKERS_ENABLED === "true",
+    auth: {
+      enabled: env.AUTH_ENABLED === "true",
+      jwksUri: env.AUTH_JWKS_URI,
+      issuer: env.AUTH_ISSUER,
+      audience: env.AUTH_AUDIENCE,
+    },
   } as const;
 }

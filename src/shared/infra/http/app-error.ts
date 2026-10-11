@@ -65,6 +65,28 @@ export class ConflictError extends AppError {
   }
 }
 
+/** Token ausente ou inválido → 401 (auth como ponto de extensão, ADR-011). */
+export class UnauthenticatedError extends AppError {
+  readonly status = 401;
+  readonly code = FailureCode.Unauthenticated;
+  readonly retryable = false;
+
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+/** Token válido mas sem direito à operação (ex.: azp ≠ providerId) → 403. */
+export class ForbiddenError extends AppError {
+  readonly status = 403;
+  readonly code = FailureCode.Forbidden;
+  readonly retryable = false;
+
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 /** Infra indisponível ou `lock_timeout` → 503, reenviar com backoff. */
 export class InfraUnavailableError extends AppError {
   readonly status = 503;

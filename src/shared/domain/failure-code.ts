@@ -22,6 +22,8 @@ export const FailureCode = {
   ProcessingFailed: "PROCESSING_FAILED",
   InfraUnavailable: "INFRA_UNAVAILABLE",
   InternalError: "INTERNAL_ERROR",
+  Unauthenticated: "UNAUTHENTICATED",
+  Forbidden: "FORBIDDEN",
 } as const;
 
 export type FailureCode = (typeof FailureCode)[keyof typeof FailureCode];

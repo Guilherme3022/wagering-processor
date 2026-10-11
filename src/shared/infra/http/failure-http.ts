@@ -26,6 +26,8 @@ const MAP: Record<FailureCode, HttpMapping> = {
   [FailureCode.ProcessingFailed]: { status: 500, retryable: false },
   [FailureCode.InfraUnavailable]: { status: 503, retryable: true },
   [FailureCode.InternalError]: { status: 500, retryable: false },
+  [FailureCode.Unauthenticated]: { status: 401, retryable: false },
+  [FailureCode.Forbidden]: { status: 403, retryable: false },
 };
 
 export function failureCodeHttp(code: FailureCode): HttpMapping {
