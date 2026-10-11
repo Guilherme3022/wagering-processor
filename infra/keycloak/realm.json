@@ -1,0 +1,30 @@
+{
+  "realm": "wagering",
+  "enabled": true,
+  "accessTokenLifespan": 300,
+  "clients": [
+    {
+      "clientId": "provider-a",
+      "name": "Provedor A",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "provider-a-secret",
+      "attributes": { "access.token.lifespan": "300" }
+    },
+    {
+      "clientId": "provider-b",
+      "name": "Provedor B",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "provider-b-secret"
+    }
+  ]
+}

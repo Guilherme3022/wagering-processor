@@ -1,0 +1,25 @@
+# Identity Provider opcional (ADR-011). Só é necessário quando AUTH_ENABLED=true.
+# Suba com:  docker compose -f docker-compose.auth.yml up -d
+# O realm 'wagering' já vem com um client client-credentials por provedor.
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./infra/keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/wagering HTTP/1.0\\r\\n\\r\\n' >&3 && cat <&3 | grep -q wagering",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 40
