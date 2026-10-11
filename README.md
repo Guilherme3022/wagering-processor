@@ -18,7 +18,7 @@ O foco não é CRUD: é preservar a correção financeira mesmo diante de concor
 - **Recuperação:** mensagens repetidas, referências ausentes e falhas temporárias são tratadas por mecanismos persistentes.
 - **Defesa no banco:** constraints, índices e triggers dão suporte às invariantes, além das validações de domínio.
 
-> As garantias acima representam o desenho e o comportamento esperado da implementação. A verificação prática está coberta pelos comandos de testes descritos abaixo.
+> Cada garantia acima tem um teste nomeado que a prova com PostgreSQL e SQS reais. O mapa está em [Onde cada garantia é provada](#onde-cada-garantia-é-provada).
 
 ## Stack
 
@@ -262,6 +262,29 @@ O ambiente de teste utiliza as portas `55432` e `54566`. Cada arquivo de integra
 | Integração | Migrations e constraints, atomicidade wallet/ledger/inbox/outbox, redelivery, retry/DLQ, publishers concorrentes e reinício |
 | Concorrência e falhas | 50 apostas idênticas simultâneas, hot wallet, pelo menos três processos, crash entre commit e ACK, referências fora de ordem e indisponibilidade de PostgreSQL/SQS |
 | Carga | Modelo aberto, métricas de desempenho e verificação de consistência ao final |
+
+### Onde cada garantia é provada
+
+Mapa da matriz de cenários do enunciado (§13) e dos critérios de avaliação (§14) para os testes nomeados que os cobrem. Cada arquivo sobe PostgreSQL e SQS reais.
+
+| Cenário | Critério avaliado | Teste |
+|---|---|---|
+| C1 — mesma aposta 50× em paralelo → 1 débito, 49 replays | Idempotência | `test/concurrency/same-bet-50x.test.ts` |
+| C2 — 100.00 com duas apostas de 80.00 → 1 PROCESSED, 1 `INSUFFICIENT_FUNDS`, saldo 20.00 | Concorrência / saldo | `test/concurrency/hot-wallet.test.ts` |
+| C3 — 20 wallets × 20 apostas em paralelo, sem interferência | Concorrência | `test/concurrency/parallel-wallets.test.ts` |
+| C4 — 3 instâncias (HTTP + consumer) sobre as mesmas wallets | Múltiplas instâncias | `test/concurrency/multi-instance.test.ts` |
+| C5 — crash após commit e antes do ACK → redelivery sem duplicar | Crash recovery | `test/concurrency/crash-after-commit.test.ts` |
+| C6 — dois publishers sobre a mesma outbox → nenhum evento perdido | Outbox | `test/concurrency/outbox-publishers.test.ts` |
+| C7 — `REFUND`/`ROLLBACK` fora de ordem e prazo vencido (`FakeClock`) | Referências | `test/concurrency/out-of-order.test.ts` |
+| C8 — matar todas as instâncias no meio da carga e reiniciar | Recuperação | `test/concurrency/restart.test.ts` |
+| C9 — hot wallet: 300 operações entre 3 instâncias | Concorrência | `test/concurrency/hot-wallet-stress.test.ts` |
+| I1 — constraints e triggers disparam via SQL direto | Schema / ledger | `test/integration/schema.test.ts` |
+| I2 — falha antes do commit não deixa rastro em nenhuma tabela | Atomicidade | `test/integration/atomicity.test.ts` |
+| I6 — mesma mensagem 2× → 1 efeito (inbox) | Mensageria | `test/integration/sqs-inbox.test.ts` |
+| I7 — envelope/payload inválido → DLQ, nunca ack silencioso | Retry / DLQ | `test/integration/sqs-retry-dlq.test.ts` |
+| I10 — PostgreSQL indisponível → recupera sem duplicar | Tolerância a falhas | `test/integration/postgres-outage.test.ts` |
+| I11 — SQS indisponível → API segue, outbox drena depois | Tolerância a falhas | `test/integration/sqs-outage.test.ts` |
+| Money / idempotência / agregados | Correção financeira | `test/unit/*.test.ts` |
 
 Ao final dos testes de integração e concorrência, `assertWalletConsistent` verifica:
 
