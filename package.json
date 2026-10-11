@@ -9,23 +9,42 @@
   "scripts": {
     "start": "bun run src/main.ts",
     "start:dev": "bun --watch run src/main.ts",
+    "start:cluster": "bun run scripts/start-cluster.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:unit": "bun test test/unit"
+    "migration:create": "bun run scripts/migrate.ts create",
+    "migration:up": "bun run scripts/migrate.ts up",
+    "migration:down": "bun run scripts/migrate.ts down",
+    "migration:list": "bun run scripts/migrate.ts list",
+    "test": "bun test",
+    "test:unit": "bun test test/unit",
+    "test:integration": "bun test test/integration",
+    "test:concurrency": "bun test test/concurrency",
+    "test:load": "bun run test/load/run.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/bun": "^1.4.2",
+    "@types/express": "^5",
     "eslint": "^10.12.0",
     "prettier": "^3.9.10",
     "typescript": "~5.9",
     "typescript-eslint": "^8.71.1"
   },
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3",
+    "@mikro-orm/core": "^6",
+    "@mikro-orm/migrations": "^6",
+    "@mikro-orm/postgresql": "^6",
     "@nestjs/common": "^11",
     "@nestjs/core": "^11",
     "@nestjs/platform-express": "^11",
+    "ajv": "^8",
+    "nestjs-pino": "^4",
+    "pino": "^9",
+    "pino-http": "^10",
+    "prom-client": "^15",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "^4.6.5"
