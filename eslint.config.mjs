@@ -93,4 +93,9 @@ export default tseslint.config(
     files: ["test/**/*.ts"],
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },
+  {
+    // Migrations usam addSql de forma síncrona; a assinatura async é contrato do MikroORM.
+    files: ["migrations/**/*.ts"],
+    rules: { "@typescript-eslint/require-await": "off" },
+  },
 );
