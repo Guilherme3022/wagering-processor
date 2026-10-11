@@ -44,7 +44,7 @@ Legenda: `[ ]` a fazer · `[~]` em andamento · `[x]` feito
 - [x] **T1.9** `GET /health/live` e `GET /health/ready` (PostgreSQL + três filas, timeout 1s). Spec §10.
 - [x] **T1.10** Shared domain: `DomainError`, enum `FailureCode` (spec §9), portas `Clock` e `IdGenerator` (UUIDv7) com implementações reais.
   Pronto quando: unit tests de `IdGenerator` (ordenação) e `Clock` passam.
-- [x] **T1.11** `AuthGuard` no-op global (exceto health e metrics) e `ProviderIdentityPort`. ADR-011.
+- [x] **T1.11** `AuthGuard` global (exceto health e metrics) e `ProviderIdentityPort`. No-op por padrão; com `AUTH_ENABLED=true` valida JWT via JWKS do IdP (Keycloak) e compara `azp` com `providerId`. ADR-011.
 - [x] **T1.12** Infra de testes: `docker-compose.test.yml`, helpers em `test/support` (banco descartável via `createTestDatabase`, app real `startTestApp`/`startMessagingApp`, cluster `spawnInstance`, `eventually`/`fireTogether`, `FakeClock`, `assertWalletConsistent`, `chaos`). Spec §12.
 - [x] **T1.13** Scripts `test:unit`, `test:integration`, `test:concurrency`, `lint`, `typecheck`.
 - [x] **T1.14** Docs: README com "Requisitos" e "Rodando" (skill `project-docs`).

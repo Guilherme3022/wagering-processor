@@ -765,7 +765,7 @@ Um resumo de três a cinco linhas vai para "Resultados medidos" no `ARCHITECTURE
 | 008 | Payload hash: SHA-256 de JSON canônico do subconjunto de negócio, prefixo de versão `v1:`. | Aceita |
 | 009 | Outbox com lease + `SKIP LOCKED`, publicação fora da transação, sem limite de tentativas, dedup por `eventId`. | Aceita |
 | 010 | Classificação de erros do consumer por tipo; DLQ explícita para permanentes e redrive para transitórios esgotados. | Aceita |
-| 011 | Autenticação não implementada: `AuthGuard` no-op + `ProviderIdentityPort`; desenho alvo Keycloak client-credentials por provedor, JWT via JWKS, claim do provider comparado ao `providerId` (mismatch → 403). | Aceita |
+| 011 | Autenticação por IdP externo, opcional via `AUTH_ENABLED`: `AuthGuard` no-op quando off; quando on, valida JWT via JWKS (Keycloak, client-credentials por provedor) e compara `azp` com `providerId` (mismatch → 403, token inválido → 401). | Aceita (reaberta e implementada) |
 | 012 | IDs UUIDv7 (`Bun.randomUUIDv7()`); cursor do ledger por `seq` identity. | Aceita |
 
 Cada ADR é detalhado em `ARCHITECTURE.md` (contexto → decisão → alternativas → consequências).
@@ -788,6 +788,11 @@ Nenhuma bloqueante. Divergências descobertas na implementação entram aqui com
 - **2026-10-10 — Healthcheck do MiniStack.** A imagem `ministackorg/ministack` não traz `curl` nem `wget`; o healthcheck dos dois compose foi trocado para `python3 -c "urllib.request..."`, que a imagem já embarca. Sem isso o container fica `unhealthy` e o `sqs-init` não roda.
 - **2026-10-10 — Persistência SQL-first (refina ADR-007).** As operações financeiras usam SQL explícito pelo `EntityManager` do MikroORM (`em.transactional()` + `getConnection().execute`) em vez de entidades `EntitySchema` com unit of work. Motivo: a correção depende de `SELECT ... FOR UPDATE`, UPDATE condicionado por versão e `INSERT ... ON CONFLICT`, mais claros e auditáveis em SQL. O espírito do ADR-007 é mantido — persistência separada do domínio, com mappers `row → domain` via `rehydrate`. A levar ao humano.
 - **2026-10-10 — Isolamento de teste por banco, não por schema.** O `search_path` do MikroORM permanece `"$user", public` mesmo com a opção `schema`, então o SQL cru das migrations cria tabelas em `public`. Para isolar, cada arquivo de teste cria um **banco** descartável (`createTestDatabase`) e aplica as migrations reais, em vez de um schema por arquivo como a §12 sugeria.
+- **2026-10-11 — Autenticação implementada (reabre ADR-011).** O humano reabriu a decisão de não
+  implementar auth. Entregue como IdP externo opcional: `AUTH_ENABLED` liga um `AuthGuard` que valida
+  JWT via JWKS (`jose`), confere `iss`/`aud`/exp e compara `azp` com o `providerId` (403 em mismatch,
+  401 sem token válido); Keycloak em `docker-compose.auth.yml` (client-credentials por provedor);
+  off por padrão para não acoplar a suíte. Teste do guard contra um JWKS controlado (sem Keycloak).
 - **2026-10-11 — Conflito de idempotência **concorrente** (4ª revisão).** O `23505` que escapa quando
   duas mensagens com a mesma key chegam juntas ao INSERT (wallets diferentes, sem lock
   compartilhado) desfazia a inbox no rollback e o consumidor dava ack — o `messageId` perdido

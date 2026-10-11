@@ -98,9 +98,23 @@ gravado como `PENDING_REFERENCE` (HTTP 202); um worker reprocessa quando a refer
 de 24h, backoff). Uma referência só é compensada uma vez, por `REFUND` **ou** `ROLLBACK` (índice
 único parcial).
 
+## Autenticação
+
+Opcional e desligada por padrão (vale 0 ponto no desafio). Com `AUTH_ENABLED=true`, o `AuthGuard`
+global exige um JWT Bearer validado pelo **JWKS de um IdP** (Keycloak em
+[docker-compose.auth.yml](docker-compose.auth.yml), client-credentials por provedor) e compara o
+claim `azp` do token com o `providerId` do payload — mismatch é `403`, token ausente/inválido é
+`401`. `GET /health/*` e `GET /metrics` ficam sempre abertos. Detalhe do desenho em
+[ARCHITECTURE.md ADR-011](ARCHITECTURE.md).
+
+```bash
+docker compose -f docker-compose.auth.yml up -d   # Keycloak com o realm 'wagering'
+# no .env: AUTH_ENABLED=true e os AUTH_* apontando para o realm
+```
+
 ## API
 
-Autenticação: ver [ARCHITECTURE.md ADR-011](ARCHITECTURE.md) (ponto de extensão, não implementada).
+Autenticação dos endpoints abaixo: ver a seção acima.
 
 ### Criar wallet — `POST /wallets`
 

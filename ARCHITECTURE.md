@@ -101,9 +101,15 @@ Cada decisão segue o formato: o problema, o que escolhemos, o que descartamos e
 
 **Redrive explícito.** Ao atingir `maxReceiveCount` recebimentos de um erro transitório, o consumidor **move a mensagem para a DLQ explicitamente**, em vez de confiar no redrive automático do broker — o emulador MiniStack não o implementa de forma confiável (ADR-013). Com o SQS real, os dois caminhos coexistem sem efeito duplicado (a mensagem é deletada da fila de entrada ao ser movida).
 
-### ADR-011 — Autenticação como ponto de extensão
+### ADR-011 — Autenticação por IdP externo, opcional via flag
 
-**Decisão.** Não implementada (não vale pontos no desafio). Existe um `AuthGuard` que hoje deixa tudo passar e uma porta `ProviderIdentityPort`. O desenho alvo é Keycloak com credenciais por provedor, validação de JWT e comparação do provedor do token com o `providerId` do payload.
+**Contexto.** Vale 0 ponto (§14) e o enunciado aceita documentar o desenho sem implementar. Começou como ponto de extensão (ADR original); reaberta a pedido do humano para entregar a versão funcional.
+
+**Decisão.** `AuthGuard` global controlado por `AUTH_ENABLED`. Com `false` (padrão) é no-op e só anexa a identidade do payload — os testes e o fluxo normal não passam por token. Com `true`, exige um JWT Bearer validado contra o **JWKS do IdP** (Keycloak em `docker-compose.auth.yml`, client-credentials por provedor): verifica assinatura RS256, `iss`, `aud` (quando configurada) e expiração, e compara o claim `azp` do token com o `providerId` do payload — mismatch é `403`, token ausente/ inválido é `401`. Health e métricas ficam sempre abertos. Nunca há tabela de usuário própria; a confiança vem do IdP.
+
+**Por quê assim.** O IdP externo é o que o enunciado pede (§2); a flag mantém o núcleo financeiro e a suíte desacoplados de um container de auth, e o guard testado contra um JWKS controlado (par de chaves local) prova a lógica sem depender do Keycloak subir. O claim `azp` identifica o client (provedor) que obteve o token no grant client-credentials.
+
+**Custo.** Uma dependência (`jose`) e um compose opcional de Keycloak; a validação de JWT adiciona uma ida ao JWKS (cacheado). Mensagens da fila seguem como canal interno confiável, mas o `providerId` da mensagem continua sob as validações de domínio.
 
 ### ADR-012 — Identificadores UUIDv7
 
