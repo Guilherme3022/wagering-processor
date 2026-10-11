@@ -147,6 +147,12 @@ describe("WagerTransaction state machine (spec §3.4)", () => {
     expect(tx.status).toBe(WagerStatus.Processed);
   });
 
+  test("matchesPayload distinguishes replay from idempotency conflict (spec §6.3)", () => {
+    const tx = newTransaction({ payloadHash: "v1:abc" });
+    expect(tx.matchesPayload("v1:abc")).toBe(true);
+    expect(tx.matchesPayload("v1:different")).toBe(false);
+  });
+
   test("transitioning out of a terminal state is a bug", () => {
     const tx = newTransaction();
     tx.markProcessed({ walletId: "wallet-1", resultBalance: brl("975.00"), referenceTransactionId: null, at });

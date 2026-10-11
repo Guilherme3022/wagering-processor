@@ -186,6 +186,11 @@ export class WagerTransaction {
     return isTerminal(this._status);
   }
 
+  /** A mesma idempotency key é replay (payload igual) ou conflito (payload diferente)? (spec §6.3) */
+  matchesPayload(payloadHash: string): boolean {
+    return this.params.payloadHash === payloadHash;
+  }
+
   /** `LOSS` não gera lançamento; os demais kinds mudam o saldo (spec §3.4). */
   affectsBalance(): boolean {
     return this.params.kind !== WagerKind.Loss;

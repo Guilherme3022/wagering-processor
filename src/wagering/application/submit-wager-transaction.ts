@@ -390,7 +390,7 @@ export class SubmitWagerTransaction {
   ): Promise<SubmitResult | null> {
     const existing = await ports.transactions.findByIdempotencyKey(command.idempotencyKey);
     if (existing !== null) {
-      if (existing.payloadHash !== payloadHash) {
+      if (!existing.matchesPayload(payloadHash)) {
         throw new IdempotencyKeyConflictError();
       }
       return buildResult(existing, true);
