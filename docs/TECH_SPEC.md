@@ -785,6 +785,41 @@ Cada ADR é detalhado em `ARCHITECTURE.md` (contexto → decisão → alternativ
 Nenhuma bloqueante. Divergências descobertas na implementação entram aqui com data e são levadas ao humano.
 
 - **2026-10-10 — Emulador de SQS.** Onde esta spec diz LocalStack, leia "emulador de SQS": o padrão passou a ser o MiniStack (ADR-013), porque o LocalStack recente exige token. Risco a validar no M8: suporte a `ApproximateReceiveCount` e ao redrive para a DLQ.
+- **2026-10-10 — Healthcheck do MiniStack.** A imagem `ministackorg/ministack` não traz `curl` nem `wget`; o healthcheck dos dois compose foi trocado para `python3 -c "urllib.request..."`, que a imagem já embarca. Sem isso o container fica `unhealthy` e o `sqs-init` não roda.
+- **2026-10-10 — Persistência SQL-first (refina ADR-007).** As operações financeiras usam SQL explícito pelo `EntityManager` do MikroORM (`em.transactional()` + `getConnection().execute`) em vez de entidades `EntitySchema` com unit of work. Motivo: a correção depende de `SELECT ... FOR UPDATE`, UPDATE condicionado por versão e `INSERT ... ON CONFLICT`, mais claros e auditáveis em SQL. O espírito do ADR-007 é mantido — persistência separada do domínio, com mappers `row → domain` via `rehydrate`. A levar ao humano.
+- **2026-10-10 — Isolamento de teste por banco, não por schema.** O `search_path` do MikroORM permanece `"$user", public` mesmo com a opção `schema`, então o SQL cru das migrations cria tabelas em `public`. Para isolar, cada arquivo de teste cria um **banco** descartável (`createTestDatabase`) e aplica as migrations reais, em vez de um schema por arquivo como a §12 sugeria.
+- **2026-10-11 — Conflito de idempotência **concorrente** (4ª revisão).** O `23505` que escapa quando
+  duas mensagens com a mesma key chegam juntas ao INSERT (wallets diferentes, sem lock
+  compartilhado) desfazia a inbox no rollback e o consumidor dava ack — o `messageId` perdido
+  reprocessava. Agora o store traduz esse `23505` (constraints de idempotência/duplicidade) em
+  `ConcurrentWriteError`; o use case **reabre uma transação** que regrava a inbox e resolve
+  replay/conflito antes do ack (spec §6.1). O branch de `23505`→ack foi removido do consumer (qualquer
+  `23505` que chegue lá é inesperado → DLQ). Teste: `concurrency/concurrent-idempotency.test.ts`.
+- **2026-10-11 — Correções da 3ª revisão.**
+  - **23505 por constraint:** o consumidor só trata como conflito→ack as violações de
+    `uq_wtx_idempotency_key`/`uq_wtx_provider_external`; qualquer outra (ex.: outbox) segue para a DLQ.
+    O filtro HTTP idem (constraint desconhecida → 500, não 409).
+  - **Inbox no conflito:** no SQS, um conflito de idempotência/duplicidade agora **grava a inbox**
+    (commit) e vira resultado terminal (ack) em vez de rollback — assim o `messageId` não reprocessa
+    (spec §6.1). No HTTP continua sendo 409.
+  - **Shutdown coordenado:** `Database.close(true)` passou a ter prazo (`withDeadline`), e todos os
+    races de shutdown usam um timeout **limpo** (sem `setTimeout` pendurado segurando o event loop).
+  - **Teste de carga:** vazão dividida pela janela medida (sem aquecimento); `classify` reconhece 503
+    antes do `>=500` genérico.
+- **2026-10-11 — Correções da 2ª revisão (P1/P2).**
+  - **Ledger ↔ wallet nos dois sentidos:** novo constraint trigger deferido `trg_ledger_requires_wallet` (AFTER INSERT no ledger) exige que a wallet esteja na mesma `version`/`balance_after` do lançamento. Fecha o furo de inserir lançamento sem alterar a wallet (challenge §6.2 "e vice-versa").
+  - **Moeda do snapshot de resultado:** nova coluna `result_balance_currency CHAR(3)` (par com `result_balance_amount`); o replay e as consultas reconstroem o saldo observado na moeda correta (challenge §9). Antes o mapper assumia a moeda da transação.
+  - **Validação de agregado:** `WagerTransaction.create` valida kind × referência (challenge §6.3), além da borda e do banco.
+  - **Consumer:** `SendMessageBatch` fatiado em lotes de 10 (limite do SQS); ack separado do processamento (falha de `DeleteMessage` após commit não vira DLQ, só redelivery+inbox); toda operação de transporte protegida; classificação transitória cobre PG **e** SQS; DLQ explícita ao atingir `maxReceiveCount` (não depende do redrive do broker — MiniStack não o faz de forma confiável); shutdown limita a espera total pelo grace.
+  - **Fault injection `fail_transient`** (só em `NODE_ENV=test`) para provar retry transitório → DLQ.
+- **2026-10-10 — `WORKERS_ENABLED`.** Variável nova (default `true`) para desligar outbox publisher,
+  worker de referência e consumer SQS. Usada nos testes que não exercitam mensageria (mantêm o teste
+  focado e sem ruído). Em produção fica sempre `true`.
+- **2026-10-10 — 503 sob `docker pause` do Postgres.** Com o banco congelado, a conexão TCP trava e a
+  requisição fica pendurada até o `unpause` (I10 verifica que não há 2xx falso e que tudo se recupera,
+  mas não um 503 imediato). Um `query_timeout` do cliente pg daria o 503 limpo; registrado em
+  ARCHITECTURE "O que faríamos com mais tempo".
+- **2026-10-10 — Schema inicial consolidado.** As tabelas, índices e triggers das tasks T3.1–T3.7 foram escritas numa única migration inicial (`Migration20260101000000_InitialSchema`) com `up`/`down`, em vez de uma migration por tabela. Facilita manter o `up→down→up` coerente; nenhuma constraint ou trigger da §4 foi omitida.
 
 ## 16. Marcos de entrega
 

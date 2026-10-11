@@ -73,11 +73,17 @@ Cada decisão segue o formato: o problema, o que escolhemos, o que descartamos e
 
 **Descartado.** Bibliotecas de decimal: funcionam, mas acrescentam dependência sem ganho para escala fixa de duas casas.
 
-### ADR-007 — MikroORM com modelos de persistência separados
+### ADR-007 — MikroORM com persistência SQL-first e mappers
 
-**Decisão.** MikroORM (preferência do enunciado, com `transactional()` e `LockMode` explícitos). As classes de domínio não conhecem o ORM: entidades de persistência ficam na infraestrutura e são convertidas pela factory `rehydrate`.
+**Contexto.** O enunciado pede MikroORM (preferencial) e a justificativa do mapeamento de `Money` e da estratégia transacional (§4, §14).
 
-**Custo.** Um mapper por agregado.
+**Decisão.** Usamos o MikroORM para o pool de conexões, `em.transactional()` (BEGIN/COMMIT) e migrations versionadas; **as operações financeiras usam SQL explícito** pelo `EntityManager` (`getConnection().execute(..., em.getTransactionContext())`), encapsulado em `SqlSession`/`SqlUnitOfWork`. Não há entidades `EntitySchema` (`entities: []`); cada linha lida vira agregado de domínio por um **mapper** com a factory `rehydrate`, e o domínio não conhece o ORM.
+
+**Por quê SQL em vez de Unit of Work + `LockMode`.** A correção depende de construções que o SQL expressa de forma direta e auditável, e que o identity map/flush do ORM tornaria implícitas ou disputaria: `SELECT ... FOR UPDATE` (ADR-005), `UPDATE ... WHERE version = $v` condicionado, `INSERT ... ON CONFLICT DO NOTHING`, `FOR UPDATE SKIP LOCKED` (outbox e worker de referência) e `SET LOCAL lock_timeout`. Manter o unit of work junto arriscaria *flushes* fora de ordem e leituras do identity map em vez do banco. O lock pessimista é feito com `FOR UPDATE` (equivalente ao `LockMode.PESSIMISTIC_WRITE`), só que explicitamente no SQL da transação.
+
+**Money.** Coluna `NUMERIC(20,2)` lida como string pelo driver `pg` e convertida para `bigint` (centavos) por um custom type do MikroORM (`MoneyAmountType`) — nunca por ponto flutuante (ADR-006). Nos mappers o par (amount, currency) reidrata em `Money`.
+
+**Custo.** Um mapper por agregado e SQL escrito à mão (parametrizado) em vez de query builder. Em troca, o caminho financeiro fica explícito e testável contra o Postgres real. Registrado como refinamento na §15 da tech spec.
 
 ### ADR-008 — Hash do payload
 
@@ -91,7 +97,9 @@ Cada decisão segue o formato: o problema, o que escolhemos, o que descartamos e
 
 ### ADR-010 — Três tipos de erro no consumidor SQS
 
-**Decisão.** Erro de negócio confirma a mensagem. Erro transitório devolve a mensagem com espera crescente. Erro permanente vai direto para a DLQ. Depois de 5 recebimentos, o redrive do SQS leva a mensagem para a DLQ.
+**Decisão.** Erro de negócio confirma a mensagem (ack). Erro transitório (PostgreSQL **ou** transporte do SQS: throttling, timeout, conexão) devolve a mensagem com espera crescente. Erro permanente vai direto para a DLQ. O `ack` (DeleteMessage) é uma etapa separada do processamento: se falhar depois do commit, a mensagem só reaparece e a inbox deduplica — nunca vira DLQ. Toda operação de transporte é protegida para uma falha de rede não derrubar o loop de consumo.
+
+**Redrive explícito.** Ao atingir `maxReceiveCount` recebimentos de um erro transitório, o consumidor **move a mensagem para a DLQ explicitamente**, em vez de confiar no redrive automático do broker — o emulador MiniStack não o implementa de forma confiável (ADR-013). Com o SQS real, os dois caminhos coexistem sem efeito duplicado (a mensagem é deletada da fila de entrada ao ser movida).
 
 ### ADR-011 — Autenticação como ponto de extensão
 
@@ -120,8 +128,22 @@ Cada decisão segue o formato: o problema, o que escolhemos, o que descartamos e
 
 ## O que faríamos com mais tempo
 
-_A completar ao fim da implementação._
+- **503 limpo quando o Postgres congela.** Hoje, com `docker pause` no banco, uma requisição HTTP
+  fica pendurada até o `unpause` (a conexão TCP congela; nem `statement_timeout`, que é do servidor,
+  nem o lock ajudam). Um `query_timeout` **do lado do cliente** (pg) converteria isso num erro
+  transitório → `503 INFRA_UNAVAILABLE` imediato. Não foi ligado por padrão para não arriscar abortar
+  operações legítimas sob contenção; precisa de um valor acima do `lock_timeout` e de testes.
+- **Confirmar `ApproximateReceiveCount` e redrive no MiniStack** contra o SQS real (ADR-013); se
+  divergir, voltar ao LocalStack com token.
+- **Protocolo de carga completo** (120 s × 3 repetições por degrau, nos quatro cenários) e um SQS
+  real para medir a vazão de publicação sem o teto do emulador.
+- **Partição do worker de referência** por faixa de hash para reduzir contenção de claim em escala.
+- **OpenTelemetry/tracing** ponta a ponta (descartado pelo humano neste desafio).
 
 ## Resultados medidos
 
-_A completar com os números do teste de carga, se ele for feito._
+Execução curta e ilustrativa do cenário `distributed` (3 instâncias, 100 req/s, 8 s medidos, mesmo
+host): p50 ~5 ms, p95 ~7 ms, p99 ~10 ms, **zero conflitos de lock**, correção 100% (reconciliação
+consistente, nenhum duplicado, outbox drenada). O gargalo observado é a **publicação da outbox para
+o emulador de SQS** (`outbox_lag_seconds` sobe a ~7 s na rajada e drena depois), não o banco nem o
+lock. Detalhes, metodologia e limitações em [docs/LOAD_TEST.md](docs/LOAD_TEST.md).
